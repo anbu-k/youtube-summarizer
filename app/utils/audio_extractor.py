@@ -3,6 +3,7 @@ import yt_dlp
 def download_audio(youtube_url):
     ydl_opts = {
         'format': 'bestaudio/best',
+        'ffmpeg_location': "C:/ProgramData/chocolatey/bin",  # Specify the location of ffmpeg and ffprobe
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
