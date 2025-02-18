@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube Video Summarizer</title>
+</head>
+<body>
+    <h1>YouTube Video Summarizer</h1>
+    <form id="summarize-form">
+        <input type="text" id="youtube-url" placeholder="Enter YouTube URL" required>
+        <button type="submit">Summarize</button>
+    </form>
+    <div id="summary-result"></div>
+
+    <script>
+        document.getElementById('summarize-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = document.getElementById('youtube-url').value;
+            const response = await fetch('/summarize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `youtube_url=${encodeURIComponent(url)}`,
+            });
+            const result = await response.json();
+            document.getElementById('summary-result').innerText = result.summary;
+        });
+    </script>
+</body>
+</html>
