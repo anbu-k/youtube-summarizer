@@ -1,19 +1,21 @@
 import os
-from flask import Flask, render_template, request, jsonify, send_file, session
+from flask import Flask, render_template, request, jsonify, send_file
 from .utils.audio_extractor import download_audio
 from .utils.speech_to_text import transcribe_audio
 from .utils.summarizer import summarize_text
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from reportlab.lib.utils import simpleSplit
 from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__, template_folder=os.path.abspath("templates"), static_folder=os.path.abspath("static"))
 app.secret_key = os.getenv("SECRET_KEY")
 
+# Define transcript storage directory
 TRANSCRIPT_DIR = os.path.join(os.getcwd(), "transcripts")
-os.makedirs(TRANSCRIPT_DIR, exist_ok=True)  
+os.makedirs(TRANSCRIPT_DIR, exist_ok=True)  # Ensure directory exists
 
 @app.route('/')
 def index():
@@ -35,66 +37,79 @@ def get_transcript():
     audio_file = download_audio(youtube_url)
     transcript = transcribe_audio(audio_file)
 
-    session['transcript'] = transcript  # Stores transcript in session
+    # Save transcript to a file instead of session
+    transcript_path = os.path.join(TRANSCRIPT_DIR, "transcript.txt")
+    with open(transcript_path, "w", encoding="utf-8") as f:
+        f.write(transcript)
+
     return jsonify({'transcript': transcript})
 
 # Function to generate and save a PDF file
-def save_transcript_as_pdf(transcript_text):
-    filename = os.path.join(TRANSCRIPT_DIR, "transcript.pdf")
+def save_transcript_as_pdf():
+    transcript_path = os.path.join(TRANSCRIPT_DIR, "transcript.txt")
 
-    try:
-        pdf_canvas = canvas.Canvas(filename, pagesize=letter)
-        pdf_canvas.setFont("Helvetica", 12)
+    # Ensure transcript file exists
+    if not os.path.exists(transcript_path):
+        return None  # Return None if no transcript is available
 
-        width, height = letter
+    pdf_path = os.path.join(TRANSCRIPT_DIR, "transcript.pdf")
+    c = canvas.Canvas(pdf_path, pagesize=letter)
+    width, height = letter
+    c.setFont("Helvetica", 12)
 
-        pdf_canvas.drawString(100, height - 50, "Transcript:")
+    # Title
+    c.drawString(50, height - 50, "YouTube Video Transcript")
 
-        y_position = height - 70  
+    # Read transcript from file
+    with open(transcript_path, "r", encoding="utf-8") as f:
+        transcript_text = f.read()
 
-        max_width = 450  
+    # Define text wrapping parameters
+    y_position = height - 70  # Start below the title
+    left_margin = 50
+    max_width = 90  # Max characters per line before wrapping
 
-        lines = transcript_text.split("\n")  
+    # Wrap text manually using textwrap
+    wrapped_lines = textwrap.wrap(transcript_text, width=max_width)
 
-        for line in lines:
-            wrapped_text = simpleSplit(line, "Helvetica", 12, max_width)  
-            for sub_line in wrapped_text:
-                if y_position < 50:  
-                    pdf_canvas.showPage()
-                    pdf_canvas.setFont("Helvetica", 12)
-                    y_position = height - 50  
+    for line in wrapped_lines:
+        if y_position < 50:  # Create new page if out of space
+            c.showPage()
+            c.setFont("Helvetica", 12)
+            y_position = height - 50
 
-                pdf_canvas.drawString(50, y_position, sub_line)  
-                y_position -= 20  
+        c.drawString(left_margin, y_position, line)
+        y_position -= 18  # Move down for the next line
 
-        pdf_canvas.save()  
-        return filename
-    except Exception as e:
-        print(f"Error generating PDF: {e}")
-        return None  # Returns None if PDF creation fail
+    c.save()
+    return pdf_path
 
-# Function to generate and save a TXT file
-def save_transcript_as_txt(transcript_text):
-    filename = os.path.join(TRANSCRIPT_DIR, "transcript.txt")
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(transcript_text)
-    return filename
+# Function to return the saved transcript as a TXT file
+def save_transcript_as_txt():
+    transcript_path = os.path.join(TRANSCRIPT_DIR, "transcript.txt")
+    if os.path.exists(transcript_path):
+        return transcript_path  # Use existing file instead of session
+    return None
 
 @app.route('/download-transcript', methods=['GET'])
 def download_transcript():
     format_type = request.args.get('format', 'txt')
 
-    # Retrieves transcript from session
-    transcript_text = session.get('transcript', None)
-    if not transcript_text:
+    # Ensure transcript exists
+    transcript_path = os.path.join(TRANSCRIPT_DIR, "transcript.txt")
+    if not os.path.exists(transcript_path):
         return jsonify({"error": "Transcript not found. Please generate it first."}), 400
 
     if format_type == "pdf":
-        file_path = save_transcript_as_pdf(transcript_text)
+        file_path = save_transcript_as_pdf()
     else:
-        file_path = save_transcript_as_txt(transcript_text)
+        file_path = save_transcript_as_txt()
 
-    return send_file(file_path, as_attachment=True)
+    # Ensure the file exists before sending
+    if file_path and os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return jsonify({"error": "Failed to generate transcript file."}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
