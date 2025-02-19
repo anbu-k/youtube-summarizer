@@ -15,4 +15,5 @@ This project downloads audio from a **YouTube video**, transcribes the speech to
 git clone https://github.com/yourusername/youtube-summarizer.git
 cd youtube-summarizer
 
-![image](https://github.com/user-attachments/assets/32a8ec17-32bb-42d1-b58a-192d824baf41)
+
+![Untitled](https://github.com/user-attachments/assets/b6b60833-9478-46f0-be42-fe961e816a6b)
