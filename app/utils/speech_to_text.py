@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def transcribe_audio(file_path):
+def transcribe_audio(file_path, language="auto"):
     """Transcribes audio using OpenAI's Whisper model."""
     
     api_key = os.getenv("OPENAI_API_KEY")

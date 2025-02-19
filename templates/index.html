@@ -11,8 +11,10 @@
   </head>
   <body>
     <div class="container">
-      <h1>YouTube Video Summarizer</h1>
-      <p>Enter a YouTube video URL to generate a summary.</p>
+      <h1 style="color: white">YouTube Video Summarizer</h1>
+      <p style="color: white">
+        Enter a YouTube video URL to generate a summary and transcript.
+      </p>
 
       <form id="summarize-form">
         <input
@@ -21,8 +23,40 @@
           placeholder="Enter YouTube URL..."
           required
         />
-        <button type="submit">Summarize</button>
+        <button type="submit">📖✨ Summarize </button>
+        <button type="button" onclick="getTranscript()">
+          📜 Get Transcript 
+        </button>
       </form>
+
+      <!-- Embedded YouTube Video -->
+      <div id="video-container" style="display: none; margin-top: 20px">
+        <iframe
+          id="video-frame"
+          width="400"
+          height="200"
+          frameborder="0"
+          allowfullscreen
+        ></iframe>
+      </div>
+
+      <!-- Transcript Box -->
+      <div id="transcript-container" style="display: none">
+        <h2>Full Transcript</h2>
+        <div id="transcript-content">
+          <p id="transcript-result">Transcript will appear here...</p>
+        </div>
+
+        <div class="transcript-controls">
+          <button class="copy" onclick="copyTranscript()">📋 Copy</button>
+          <button class="pdf" onclick="downloadTranscript('pdf')">
+            📄 PDF
+          </button>
+          <button class="txt" onclick="downloadTranscript('txt')">
+            📜 TXT
+          </button>
+        </div>
+      </div>
 
       <!-- Summary Box -->
       <div id="summary-container">
@@ -31,49 +65,111 @@
     </div>
 
     <script>
-        document.getElementById('summarize-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const url = document.getElementById('youtube-url').value;
-            const summarizeButton = document.querySelector("button");
-            const summaryResult = document.getElementById('summary-result');
-    
-            
-            summarizeButton.disabled = true;
-            summarizeButton.classList.add("disabled");
-            summarizeButton.textContent = "Summarizing...";
-    
-           
-            let dots = 0;
-            const loadingInterval = setInterval(() => {
-                dots = (dots + 1) % 4;
-                summaryResult.innerText = "Summarizing" + ".".repeat(dots);
-            }, 500); 
-    
-            try {
-                const response = await fetch('/summarize', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `youtube_url=${encodeURIComponent(url)}`,
-                });
-    
-                const result = await response.json();
-                
-                
-                clearInterval(loadingInterval);
-                summaryResult.innerText = result.summary;
-            } catch (error) {
-                clearInterval(loadingInterval);
-                summaryResult.innerText = "An error occurred. Please try again.";
-            }
-    
-            
-            summarizeButton.disabled = false;
-            summarizeButton.classList.remove("disabled");
-            summarizeButton.textContent = "Summarize";
+      document
+        .getElementById("summarize-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const url = document.getElementById("youtube-url").value;
+          const summarizeButton = document.querySelector("button");
+          const summaryResult = document.getElementById("summary-result");
+
+          summarizeButton.disabled = true;
+          summarizeButton.classList.add("disabled");
+          summarizeButton.textContent = "Summarizing...";
+
+          let dots = 0;
+          const loadingInterval = setInterval(() => {
+            dots = (dots + 1) % 4;
+            summaryResult.innerText = "Summarizing" + ".".repeat(dots);
+          }, 500);
+
+          try {
+            const response = await fetch("/summarize", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `youtube_url=${encodeURIComponent(url)}`,
+            });
+
+            const result = await response.json();
+
+            clearInterval(loadingInterval);
+            summaryResult.innerText = result.summary;
+          } catch (error) {
+            clearInterval(loadingInterval);
+            summaryResult.innerText = "An error occurred. Please try again.";
+          }
+
+          summarizeButton.disabled = false;
+          summarizeButton.classList.remove("disabled");
+          summarizeButton.textContent = "Summarize";
         });
-    </script>   
+
+      async function getTranscript() {
+        const url = document.getElementById("youtube-url").value;
+        const transcriptResult = document.getElementById("transcript-result");
+        const transcriptContainer = document.getElementById(
+          "transcript-container"
+        );
+
+        transcriptResult.innerText = "Fetching transcript...";
+
+        try {
+          const response = await fetch("/transcript", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `youtube_url=${encodeURIComponent(url)}`,
+          });
+
+          const result = await response.json();
+          transcriptResult.innerText = result.transcript;
+          transcriptContainer.style.display = "block";
+        } catch (error) {
+          transcriptResult.innerText = "Error fetching transcript.";
+        }
+      }
+
+      function copyTranscript() {
+        const transcriptText =
+          document.getElementById("transcript-result").innerText;
+        navigator.clipboard.writeText(transcriptText).then(() => {
+          alert("Transcript copied to clipboard!");
+        });
+      }
+
+      function downloadTranscript(format) {
+        fetch(`/download-transcript?format=${format}`)
+          .then((response) => response.blob())
+          .then((blob) => {
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download =
+              format === "pdf" ? "transcript.pdf" : "transcript.txt";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          })
+          .catch((error) =>
+            console.error("Error downloading transcript:", error)
+          );
+      }
+
+      function updateVideo() {
+        let url = document.getElementById("youtube-url").value;
+        let videoId = url.split("v=")[1]?.split("&")[0];
+
+        if (videoId) {
+          let videoFrame = document.getElementById("video-frame");
+          videoFrame.src = `https://www.youtube.com/embed/${videoId}`;
+          document.getElementById("video-container").style.display = "block";
+        }
+      }
+
+      document
+        .getElementById("youtube-url")
+        .addEventListener("input", updateVideo);
+    </script>
   </body>
 </html>
