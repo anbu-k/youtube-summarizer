@@ -4,7 +4,7 @@ from .utils.audio_extractor import download_audio
 from .utils.speech_to_text import transcribe_audio
 from .utils.summarizer import summarize_text
 
-app = Flask(__name__, template_folder=os.path.abspath("templates"))
+app = Flask(__name__, template_folder=os.path.abspath("templates"), static_folder=os.path.abspath("static"))
 
 @app.route('/')
 def index():

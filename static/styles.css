@@ -1,0 +1,115 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Arial", sans-serif;
+}
+
+/* Background */
+body {
+    background: linear-gradient(135deg, #007BFF, #00D4FF);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px;
+}
+
+/* Main Container */
+.container {
+    background: rgba(255, 255, 255, 0);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    width: 90%;
+    max-width: 550px;
+}
+
+/* Heading */
+h1 {
+    color: #333;
+    font-size: 26px;
+    margin-bottom: 8px;
+}
+
+p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Input Field */
+input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease-in-out;
+}
+
+input[type="text"]:focus {
+    border-color: #007BFF;
+    outline: none;
+}
+
+/* Button */
+button {
+    background: #ff6600bd;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Summary Box */
+#summary-container {
+    margin-top: 20px;
+    padding: 15px;
+    background: #eef;
+    border-left: 4px solid #007BFF;
+    color: #333;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: left;
+}
+
+/* Disable button when processing */
+button.disabled {
+    background: #a0a0a0 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    opacity: 0.7;
+}
+
+/* Loading animation for summary */
+#summary-result {
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    min-height: 50px; /* Ensures height remains while loading */
+}
+
+/* Loading dots animation */
+@keyframes dots {
+    0% { content: "Summarizing"; }
+    25% { content: "Summarizing."; }
+    50% { content: "Summarizing.."; }
+    75% { content: "Summarizing..."; }
+}

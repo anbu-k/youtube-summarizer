@@ -1,30 +1,79 @@
 <!DOCTYPE html>
-<html>
-<head>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>YouTube Video Summarizer</title>
-</head>
-<body>
-    <h1>YouTube Video Summarizer</h1>
-    <form id="summarize-form">
-        <input type="text" id="youtube-url" placeholder="Enter YouTube URL" required>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1>YouTube Video Summarizer</h1>
+      <p>Enter a YouTube video URL to generate a summary.</p>
+
+      <form id="summarize-form">
+        <input
+          type="text"
+          id="youtube-url"
+          placeholder="Enter YouTube URL..."
+          required
+        />
         <button type="submit">Summarize</button>
-    </form>
-    <div id="summary-result"></div>
+      </form>
+
+      <!-- Summary Box -->
+      <div id="summary-container">
+        <p id="summary-result">Your summarized text will appear here...</p>
+      </div>
+    </div>
 
     <script>
         document.getElementById('summarize-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const url = document.getElementById('youtube-url').value;
-            const response = await fetch('/summarize', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `youtube_url=${encodeURIComponent(url)}`,
-            });
-            const result = await response.json();
-            document.getElementById('summary-result').innerText = result.summary;
+            const summarizeButton = document.querySelector("button");
+            const summaryResult = document.getElementById('summary-result');
+    
+            
+            summarizeButton.disabled = true;
+            summarizeButton.classList.add("disabled");
+            summarizeButton.textContent = "Summarizing...";
+    
+           
+            let dots = 0;
+            const loadingInterval = setInterval(() => {
+                dots = (dots + 1) % 4;
+                summaryResult.innerText = "Summarizing" + ".".repeat(dots);
+            }, 500); 
+    
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `youtube_url=${encodeURIComponent(url)}`,
+                });
+    
+                const result = await response.json();
+                
+                
+                clearInterval(loadingInterval);
+                summaryResult.innerText = result.summary;
+            } catch (error) {
+                clearInterval(loadingInterval);
+                summaryResult.innerText = "An error occurred. Please try again.";
+            }
+    
+            
+            summarizeButton.disabled = false;
+            summarizeButton.classList.remove("disabled");
+            summarizeButton.textContent = "Summarize";
         });
-    </script>
-</body>
+    </script>   
+  </body>
 </html>
